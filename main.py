@@ -34,18 +34,21 @@ client_requests = defaultdict(deque)
 # ---------------- RATE LIMIT ----------------
 def check_rate_limit(client_id: str):
     now = time.time()
-    dq = client_requests[client_id]
 
-    # remove expired requests
-    while dq and now - dq[0] > WINDOW:
-        dq.popleft()
+    lock = client_locks[client_id]
 
-    # STRICT LIMIT CHECK (must be BEFORE append)
-    if len(dq) >= RATE_LIMIT:
-        return False
+    with lock:
+        dq = client_requests[client_id]
 
-    dq.append(now)
-    return True
+        # remove expired
+        while dq and now - dq[0] > WINDOW:
+            dq.popleft()
+
+        if len(dq) >= RATE_LIMIT:
+            return False
+
+        dq.append(now)
+        return True
 
 
 # ---------------- WORK ENDPOINT (RATE LIMIT TEST) ----------------
