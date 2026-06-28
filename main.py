@@ -36,11 +36,11 @@ def check_rate_limit(client_id: str):
     now = time.time()
     dq = client_requests[client_id]
 
-    # remove expired requests (older than 10 sec)
+    # remove expired requests
     while dq and now - dq[0] > WINDOW:
         dq.popleft()
 
-    # enforce limit BEFORE adding new request
+    # STRICT check
     if len(dq) >= RATE_LIMIT:
         return False
 
